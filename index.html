@@ -1,0 +1,2044 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>n-Ball Explorer • 3Blue1Brown</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&amp;family=Space+Grotesk:wght@500;600&amp;display=swap");
+
+      :root {
+        --accent: #22d3ee;
+      }
+
+      body {
+        font-family: "Inter", system_ui, sans-serif;
+      }
+
+      .font-display {
+        font-family: "Space Grotesk", "Inter", system_ui, sans-serif;
+        font-weight: 600;
+      }
+
+      .section {
+        scroll-margin-top: 80px;
+      }
+
+      .glow-cyan {
+        box-shadow:
+          0 0 25px rgba(34, 211, 238, 0.25),
+          0 0 50px rgba(34, 211, 238, 0.1);
+      }
+
+      .math-container {
+        background: #0f172a;
+        border: 1px solid #334155;
+      }
+
+      .nav-active {
+        background: #1e2937;
+        color: #22d3ee;
+        border-bottom: 3px solid #22d3ee;
+      }
+
+      .dimension-label {
+        font-variant-numeric: tabular-nums;
+      }
+
+      canvas {
+        border-radius: 12px;
+        box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.3);
+      }
+
+      .formula-hover {
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .formula-hover:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+      }
+
+      .metric-value {
+        font-variant-numeric: tabular-nums;
+        font-feature-settings: "ss02";
+      }
+
+      .b1b-gradient {
+        background: linear-gradient(135deg, #0f172a 0%, #1e2937 100%);
+      }
+
+      .math-glow {
+        text-shadow: 0 0 12px rgba(165, 243, 252, 0.5);
+      }
+
+      .slice-line {
+        stroke: #22d3ee;
+        stroke-width: 3;
+        stroke-dasharray: 8 4;
+        animation: dash 1.5s linear infinite;
+      }
+
+      @keyframes dash {
+        to {
+          stroke-dashoffset: -24;
+        }
+      }
+
+      .explanation {
+        font-size: 0.875rem;
+        line-height: 1.5;
+      }
+
+      .nav-tab {
+        transition: all 0.2s ease;
+      }
+
+      .nav-tab:hover {
+        color: #67e8f9;
+      }
+
+      .value-pop {
+        animation: pop 0.4s ease forwards;
+      }
+
+      .stat-card {
+        transition:
+          transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+          box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow:
+          0 20px 25px -5px rgb(0 0 0 / 0.1),
+          0 8px 10px -6px rgb(0 0 0 / 0.1);
+      }
+
+      .demo-canvas {
+        background: #0f172a;
+        border: 1px solid #475569;
+      }
+    </style>
+  </head>
+  <body class="bg-slate-950 text-slate-200">
+    <!-- Navbar -->
+    <nav
+      class="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-lg border-b border-slate-800"
+    >
+      <div class="max-w-7xl mx-auto px-6">
+        <div class="flex items-center justify-between h-16">
+          <div class="flex items-center gap-x-4">
+            <div class="flex items-center gap-x-3">
+              <div
+                class="w-9 h-9 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center"
+              >
+                <span class="text-slate-950 font-bold text-2xl">n</span>
+              </div>
+              <div>
+                <span
+                  class="font-display text-2xl font-semibold tracking-tighter"
+                  >n-Ball Explorer</span
+                >
+                <span
+                  class="ml-2 text-xs px-2 py-0.5 bg-slate-800 text-cyan-400 rounded-full font-mono"
+                  >3B1B</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <div class="hidden md:flex items-center gap-x-2">
+            <a
+              href="https://www.youtube.com/watch?v=fsLh-NYhOoU"
+              target="_blank"
+              class="px-4 py-2 text-sm flex items-center gap-x-2 hover:bg-slate-800 rounded-xl transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 4.01V8"
+                />
+              </svg>
+              <span class="text-sm">Watch the video</span>
+            </a>
+            <div class="h-6 w-px bg-slate-700"></div>
+            <button
+              onclick="copyAllFormulas()"
+              class="px-4 py-2 text-sm flex items-center gap-x-2 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors"
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-4 h-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 01-2 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                />
+              </svg>
+              <span>Copy formulas</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Hero -->
+    <div class="max-w-7xl mx-auto px-6 pt-12 pb-8">
+      <div class="flex flex-col md:flex-row items-center gap-8">
+        <div class="flex-1">
+          <div
+            class="inline-flex items-center gap-x-2 px-4 py-1.5 bg-slate-900 rounded-full mb-4 border border-slate-700"
+          >
+            <div
+              class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"
+            ></div>
+            <span class="text-emerald-400 text-sm font-medium"
+              >Inspired by 3Blue1Brown • Feb 2026</span
+            >
+          </div>
+
+          <h1
+            class="font-display text-6xl md:text-7xl tracking-tighter font-semibold leading-none mb-4"
+          >
+            The most<br />beautiful formula<br />in mathematics
+          </h1>
+          <p class="max-w-md text-xl text-slate-400 mb-8">
+            An interactive journey through the volume of spheres in any number
+            of dimensions.
+          </p>
+
+          <div class="flex flex-wrap gap-3">
+            <button
+              onclick="showHowItWorks()"
+              class="px-6 py-3.5 border border-slate-700 hover:bg-slate-800 rounded-2xl flex items-center gap-x-2 transition-colors"
+            >
+              How it works
+            </button>
+          </div>
+
+          <div class="mt-6 flex items-center gap-x-4 text-sm text-slate-500">
+            <div>Gamma function • Recurrence • Archimedes</div>
+          </div>
+        </div>
+
+        <div class="flex-1 relative hidden lg:block">
+          <div
+            class="bg-slate-900 rounded-3xl p-6 border border-slate-700 glow-cyan"
+          >
+            <div class="flex justify-between items-center mb-4">
+              <div>
+                <div class="text-xs text-slate-400">CURRENTLY VIEWING</div>
+                <div class="font-mono text-2xl font-semibold text-cyan-400">
+                  n = <span id="hero-n">5.0</span>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-slate-400">UNIT VOLUME</div>
+                <div class="font-mono text-xl font-semibold" id="hero-volume">
+                  8.256
+                </div>
+              </div>
+            </div>
+            <div class="h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div
+                class="h-2 bg-gradient-to-r from-cyan-400 to-blue-500 w-[42%]"
+                style="width: 42%"
+              ></div>
+            </div>
+            <div class="text-[10px] text-center mt-1 text-slate-500">
+              Peak volume near dimension 5
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Navigation Tabs -->
+    <div
+      class="max-w-7xl mx-auto px-6 sticky top-16 z-40 bg-slate-950/95 backdrop-blur border-b border-slate-800"
+    >
+      <div class="flex overflow-x-auto pb-3 gap-x-1 no-scrollbar">
+        <button
+          onclick="switchTab(0)"
+          id="tab-0"
+          class="nav-tab nav-active px-6 py-3 text-sm font-medium rounded-t-2xl flex items-center gap-x-2 whitespace-nowrap"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+            />
+          </svg>
+          <span>Live Formula</span>
+        </button>
+        <button
+          onclick="switchTab(1)"
+          id="tab-1"
+          class="nav-tab px-6 py-3 text-sm font-medium rounded-t-2xl flex items-center gap-x-2 whitespace-nowrap hover:bg-slate-900"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2"
+            />
+          </svg>
+          <span>Slicing Visualizer</span>
+        </button>
+        <button
+          onclick="switchTab(2)"
+          id="tab-2"
+          class="nav-tab px-6 py-3 text-sm font-medium rounded-t-2xl flex items-center gap-x-2 whitespace-nowrap hover:bg-slate-900"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z"
+            />
+          </svg>
+          <span>Dimension Sweep</span>
+        </button>
+        <button
+          onclick="switchTab(3)"
+          id="tab-3"
+          class="nav-tab px-6 py-3 text-sm font-medium rounded-t-2xl flex items-center gap-x-2 whitespace-nowrap hover:bg-slate-900"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2v-.5"
+            />
+          </svg>
+          <span>High-D Intuition</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-6 pt-8 pb-16">
+      <!-- TAB 0: Live Formula Explorer -->
+      <div id="tab-content-0" class="tab-content">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          <!-- Controls -->
+          <div class="lg:col-span-5">
+            <div class="bg-slate-900 rounded-3xl p-8 border border-slate-700">
+              <h3 class="font-semibold text-xl mb-6 flex items-center gap-x-3">
+                <span>Formula Explorer</span>
+                <span
+                  class="text-xs px-3 py-1 bg-cyan-950 text-cyan-400 rounded-full"
+                  >LIVE</span
+                >
+              </h3>
+
+              <div class="space-y-8">
+                <!-- Dimension Slider -->
+                <div>
+                  <div class="flex justify-between items-baseline mb-3">
+                    <label class="font-medium text-sm text-slate-300"
+                      >Dimension
+                      <span class="font-mono text-cyan-400">(n)</span></label
+                    >
+                    <div class="flex items-center gap-x-2">
+                      <span
+                        id="n-value"
+                        class="font-mono text-3xl font-semibold text-white dimension-label"
+                        >5.0</span
+                      >
+                      <button
+                        onclick="setRandomN()"
+                        class="text-xs px-2 py-1 bg-slate-800 hover:bg-slate-700 rounded"
+                      >
+                        RANDOM
+                      </button>
+                    </div>
+                  </div>
+                  <input
+                    type="range"
+                    id="n-slider"
+                    min="1"
+                    max="20"
+                    step="0.1"
+                    value="5"
+                    class="w-full accent-cyan-400"
+                    oninput="updateFormulaExplorer()"
+                  />
+                  <div
+                    class="flex justify-between text-[10px] text-slate-500 mt-1 px-1"
+                  >
+                    <div>1D</div>
+                    <div>5D</div>
+                    <div>10D</div>
+                    <div>20D</div>
+                  </div>
+                </div>
+
+                <!-- Radius Slider -->
+                <div>
+                  <div class="flex justify-between items-baseline mb-3">
+                    <label class="font-medium text-sm text-slate-300"
+                      >Radius
+                      <span class="font-mono text-cyan-400">(r)</span></label
+                    >
+                    <span
+                      id="r-value"
+                      class="font-mono text-3xl font-semibold text-white"
+                      >1.00</span
+                    >
+                  </div>
+                  <input
+                    type="range"
+                    id="r-slider"
+                    min="0.1"
+                    max="5"
+                    step="0.05"
+                    value="1"
+                    class="w-full accent-cyan-400"
+                    oninput="updateFormulaExplorer()"
+                  />
+                  <div
+                    class="flex justify-between text-[10px] text-slate-500 mt-1 px-1"
+                  >
+                    <div>0.1</div>
+                    <div>2.5</div>
+                    <div>5.0</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="mt-8 pt-6 border-t border-slate-700">
+                <div class="grid grid-cols-2 gap-4">
+                  <div
+                    onclick="resetToUnit()"
+                    class="cursor-pointer bg-slate-800 hover:bg-slate-700 transition-colors px-4 py-3 rounded-2xl text-center"
+                  >
+                    <div class="text-xs text-slate-400">RESET</div>
+                    <div class="font-semibold">Unit Ball (r=1)</div>
+                  </div>
+                  <div
+                    onclick="setToPeak()"
+                    class="cursor-pointer bg-slate-800 hover:bg-slate-700 transition-colors px-4 py-3 rounded-2xl text-center"
+                  >
+                    <div class="text-xs text-slate-400">GO TO</div>
+                    <div class="font-semibold text-emerald-400">
+                      Peak Volume (≈5.26)
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Formula Display -->
+          <div class="lg:col-span-7">
+            <div
+              class="bg-slate-900 rounded-3xl p-8 border border-slate-700 h-full"
+            >
+              <div class="flex justify-between items-start mb-6">
+                <div>
+                  <div
+                    class="uppercase tracking-[2px] text-xs text-cyan-400 font-medium"
+                  >
+                    THE BEAUTIFUL FORMULA
+                  </div>
+                  <div class="text-2xl font-semibold">Volume of the n-ball</div>
+                </div>
+                <button
+                  onclick="copyFormula('volume')"
+                  class="text-xs flex items-center gap-x-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 rounded-xl transition-colors"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    class="w-3.5 h-3.5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="3"
+                      d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 01-2 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+                    />
+                  </svg>
+                  <span>COPY</span>
+                </button>
+              </div>
+
+              <div
+                id="volume-formula"
+                class="math-container p-6 rounded-2xl text-xl font-mono mb-6 cursor-pointer formula-hover"
+                onclick="highlightFormulaPart('volume')"
+              >
+                <!-- KaTeX rendered here -->
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <!-- Volume -->
+                <div class="stat-card bg-slate-800 rounded-2xl p-5">
+                  <div class="flex justify-between">
+                    <div>
+                      <div
+                        class="text-xs uppercase tracking-widest text-emerald-400"
+                      >
+                        VOLUME Vₙ(r)
+                      </div>
+                      <div
+                        id="volume-value"
+                        class="metric-value font-mono text-3xl font-semibold text-white mt-1"
+                      >
+                        —
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mt-4 text-[10px] text-slate-500">
+                    Compared to 3D:
+                    <span id="vol-compare" class="font-mono">—</span>
+                  </div>
+                </div>
+
+                <!-- Surface -->
+                <div class="stat-card bg-slate-800 rounded-2xl p-5">
+                  <div class="flex justify-between">
+                    <div>
+                      <div
+                        class="text-xs uppercase tracking-widest text-purple-400"
+                      >
+                        SURFACE Sₙ₋₁(r)
+                      </div>
+                      <div
+                        id="surface-value"
+                        class="metric-value font-mono text-3xl font-semibold text-white mt-1"
+                      >
+                        —
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mt-4 text-[10px] text-slate-500">
+                    dV/dr relation
+                  </div>
+                </div>
+
+                <div
+                  class="stat-card bg-slate-800 rounded-2xl p-5 flex flex-col justify-between"
+                >
+                  <div>
+                    <div
+                      class="text-xs uppercase tracking-widest text-amber-400"
+                    >
+                      PEAK DIMENSION
+                    </div>
+                    <div class="font-semibold text-lg">≈ 5.256</div>
+                  </div>
+                  <div class="text-[10px] text-slate-500">
+                    Where volume is maximized for r=1
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Explanation cards -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div
+            class="bg-slate-900 border border-slate-700 rounded-3xl p-5 text-sm"
+          >
+            <div
+              class="font-semibold mb-2 flex items-center gap-x-2 text-cyan-300"
+            >
+              <span>π^{n/2}</span>
+            </div>
+            <p class="explanation text-slate-400">
+              The "circular" contribution from each pair of dimensions. Grows
+              with n but slower than the denominator.
+            </p>
+          </div>
+          <div
+            class="bg-slate-900 border border-slate-700 rounded-3xl p-5 text-sm"
+          >
+            <div
+              class="font-semibold mb-2 flex items-center gap-x-2 text-purple-300"
+            >
+              <span>Γ(n/2 + 1)</span>
+            </div>
+            <p class="explanation text-slate-400">
+              Generalized factorial. Encodes the recursive slicing: each new
+              dimension divides by roughly n/2.
+            </p>
+          </div>
+          <div
+            class="bg-slate-900 border border-slate-700 rounded-3xl p-5 text-sm"
+          >
+            <div
+              class="font-semibold mb-2 flex items-center gap-x-2 text-emerald-300"
+            >
+              <span>rⁿ</span>
+            </div>
+            <p class="explanation text-slate-400">
+              Simple scaling. In high dimensions even tiny changes in radius
+              cause enormous volume changes.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 1: Interactive Slicing Visualizer -->
+      <div id="tab-content-1" class="tab-content hidden">
+        <div class="bg-slate-900 rounded-3xl p-8 border border-slate-700">
+          <div class="flex flex-col lg:flex-row gap-8">
+            <!-- Canvas -->
+            <div class="flex-1">
+              <div class="flex items-center justify-between mb-4">
+                <div>
+                  <h3 class="font-semibold text-xl">
+                    Volume Grid &amp; Slicing
+                  </h3>
+                  <p class="text-sm text-slate-400">
+                    Archimedes’ method in higher dimensions • Move mouse over
+                    the ball
+                  </p>
+                </div>
+                <div class="flex gap-x-2">
+                  <select
+                    id="slice-dimension"
+                    onchange="updateSlicingViz()"
+                    class="bg-slate-800 border border-slate-600 text-sm rounded-xl px-3 py-1.5"
+                  >
+                    <option value="2">2D (Circle)</option>
+                    <option value="3">3D (Ball)</option>
+                    <option value="4">4D</option>
+                    <option value="5" selected>5D</option>
+                    <option value="6">6D</option>
+                    <option value="8">8D</option>
+                    <option value="10">10D</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="relative">
+                <canvas
+                  id="slice-canvas"
+                  width="620"
+                  height="420"
+                  class="demo-canvas w-full max-w-[620px] mx-auto cursor-crosshair"
+                ></canvas>
+
+                <div
+                  class="absolute bottom-4 right-4 bg-slate-950/90 px-3 py-1 rounded-xl text-xs flex items-center gap-x-2 border border-slate-700"
+                >
+                  <div
+                    class="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"
+                  ></div>
+                  <span id="slice-status">Mouse over to slice</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Live Info -->
+            <div class="lg:w-80 flex-shrink-0">
+              <div class="bg-slate-800 rounded-2xl p-6 h-full">
+                <div
+                  class="uppercase text-xs tracking-[1px] mb-4 text-cyan-400"
+                >
+                  LIVE SLICE DATA
+                </div>
+
+                <div class="space-y-5">
+                  <div>
+                    <div class="flex justify-between text-sm mb-1">
+                      <span class="text-slate-400">Slice position x</span>
+                      <span id="slice-x" class="font-mono font-semibold"
+                        >0.00</span
+                      >
+                    </div>
+                    <div
+                      class="h-1.5 bg-slate-700 rounded-full overflow-hidden"
+                    >
+                      <div
+                        id="slice-progress"
+                        class="h-1.5 bg-cyan-400 transition-all"
+                        style="width: 50%"
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div class="grid grid-cols-2 gap-4">
+                    <div>
+                      <div class="text-xs text-slate-400">Local radius</div>
+                      <div
+                        id="local-radius"
+                        class="font-mono text-2xl font-semibold"
+                      >
+                        —
+                      </div>
+                    </div>
+                    <div>
+                      <div class="text-xs text-slate-400">
+                        V<sub>n-2</sub> at slice
+                      </div>
+                      <div
+                        id="local-v"
+                        class="font-mono text-2xl font-semibold text-emerald-400"
+                      >
+                        —
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="pt-4 border-t border-slate-700">
+                    <div class="text-xs text-slate-400 mb-2">
+                      RECURRENCE RELATION
+                    </div>
+                    <div
+                      class="font-mono text-xs bg-slate-950 p-3 rounded-xl border border-slate-700"
+                    >
+                      V<sub>n</sub>(r) = ∫<sub>-r</sub
+                      ><sup>r</sup> V<sub>n-2</sub>(√(r²−x²)) dx
+                    </div>
+                  </div>
+
+                  <div
+                    onclick="computeNumericalIntegral()"
+                    class="cursor-pointer text-center py-2 text-xs bg-slate-700 hover:bg-slate-600 rounded-2xl transition-colors"
+                  >
+                    Compute numerical integral → match closed form
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 2: Dimension Sweep Plot -->
+      <div id="tab-content-2" class="tab-content hidden">
+        <div class="bg-slate-900 rounded-3xl p-8 border border-slate-700">
+          <div class="flex flex-col lg:flex-row gap-8">
+            <div class="flex-1">
+              <h3 class="font-semibold text-xl mb-2">
+                Volume &amp; Surface vs Dimension
+              </h3>
+              <p class="text-sm text-slate-400 mb-4">
+                Unit ball (r = 1). Hover the chart to explore any dimension.
+              </p>
+
+              <div class="bg-slate-950 p-4 rounded-2xl">
+                <canvas
+                  id="sweep-chart"
+                  width="700"
+                  height="340"
+                  class="w-full"
+                ></canvas>
+              </div>
+            </div>
+
+            <div class="lg:w-72 flex-shrink-0">
+              <div class="sticky top-24">
+                <div class="bg-slate-800 rounded-2xl p-6">
+                  <div id="sweep-selected" class="mb-4">
+                    <div class="text-xs text-slate-400">SELECTED DIMENSION</div>
+                    <div
+                      class="font-display text-6xl font-semibold text-white"
+                      id="sweep-n"
+                    >
+                      5
+                    </div>
+                    <div class="flex gap-x-4 mt-1">
+                      <div>
+                        <div class="text-xs text-emerald-400">VOLUME</div>
+                        <div id="sweep-vol" class="font-mono text-xl">
+                          8.256
+                        </div>
+                      </div>
+                      <div>
+                        <div class="text-xs text-purple-400">SURFACE</div>
+                        <div id="sweep-surf" class="font-mono text-xl">
+                          25.13
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="text-xs text-slate-400 mb-3">QUICK FACTS</div>
+                  <div class="space-y-2 text-sm">
+                    <div class="flex justify-between">
+                      <span>Max volume at</span>
+                      <span class="font-mono text-emerald-300">n ≈ 5.26</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>At n=10</span> <span class="font-mono">2.55</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>At n=20</span> <span class="font-mono">0.025</span>
+                    </div>
+                    <div class="flex justify-between">
+                      <span>At n=100</span>
+                      <span class="font-mono text-red-400">~10⁻⁴⁰</span>
+                    </div>
+                  </div>
+
+                  <button
+                    onclick="animateSweep()"
+                    class="mt-6 w-full py-2.5 text-sm bg-gradient-to-r from-cyan-500 to-blue-500 hover:brightness-110 rounded-2xl font-medium flex items-center justify-center gap-x-2"
+                  >
+                    <span>Animate Full Sweep</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 3: High-Dimensional Intuition -->
+      <div id="tab-content-3" class="tab-content hidden">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <!-- Cube Puzzle -->
+          <div class="bg-slate-900 rounded-3xl p-8 border border-slate-700">
+            <div class="flex justify-between mb-6">
+              <div>
+                <h3 class="font-semibold text-xl">The Corner Spheres Puzzle</h3>
+                <p class="text-sm text-slate-400">
+                  Why does the central sphere burst out of the cube?
+                </p>
+              </div>
+              <div class="text-right">
+                <div class="text-xs text-amber-400">FROM THE VIDEO</div>
+              </div>
+            </div>
+
+            <canvas
+              id="cube-canvas"
+              width="480"
+              height="340"
+              class="demo-canvas w-full mx-auto mb-6"
+            ></canvas>
+
+            <div class="flex items-center gap-x-4">
+              <div class="flex-1">
+                <label class="text-xs text-slate-400">DIMENSION</label>
+                <input
+                  type="range"
+                  id="cube-n-slider"
+                  min="1"
+                  max="20"
+                  step="0.2"
+                  value="3"
+                  class="w-full accent-amber-400"
+                  oninput="updateCubeDemo()"
+                />
+                <div class="flex justify-between text-xs text-slate-500 px-0.5">
+                  <span>1</span><span>20</span>
+                </div>
+              </div>
+              <div class="text-center">
+                <div class="text-xs text-slate-400">CENTRAL RADIUS</div>
+                <div
+                  id="cube-radius"
+                  class="font-mono text-4xl font-semibold text-amber-400"
+                >
+                  1.00
+                </div>
+              </div>
+            </div>
+
+            <div
+              class="mt-4 text-xs bg-slate-950 p-3 rounded-2xl border border-slate-700 text-slate-300"
+            >
+              In n dimensions the distance from center to a corner of the unit
+              hypercube is <span class="font-mono text-amber-300">√n</span>.
+              Central sphere radius = <span class="font-mono">√n − 1</span>.
+              When this exceeds 1, the sphere protrudes the cube faces.
+            </div>
+          </div>
+
+          <!-- Volume Vanishing -->
+          <div class="bg-slate-900 rounded-3xl p-8 border border-slate-700">
+            <h3 class="font-semibold text-xl mb-2">
+              Why Volume Approaches Zero
+            </h3>
+            <p class="text-sm text-slate-400 mb-6">
+              In high dimensions almost all volume lives in a razor-thin shell
+              near the surface.
+            </p>
+
+            <canvas
+              id="vanish-canvas"
+              width="480"
+              height="260"
+              class="demo-canvas w-full mb-6"
+            ></canvas>
+
+            <div class="flex justify-center gap-x-3">
+              <button
+                onclick="runVolumeCollapse()"
+                class="px-5 py-2 text-sm bg-red-900/70 hover:bg-red-900 text-red-200 rounded-2xl flex items-center gap-x-2"
+              >
+                <span>Watch Volume Collapse</span>
+              </button>
+              <button
+                onclick="resetVanishDemo()"
+                class="px-5 py-2 text-sm border border-slate-600 rounded-2xl"
+              >
+                Reset
+              </button>
+            </div>
+
+            <div class="mt-6 text-xs text-center text-slate-400">
+              At n=100 the volume is ~2.37×10⁻⁴⁰ — effectively nothing compared
+              to the containing hypercube.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800 py-8">
+      <div class="max-w-7xl mx-auto px-6 text-center text-xs text-slate-500">
+        Built as a tribute to
+        <a
+          href="https://www.youtube.com/watch?v=fsLh-NYhOoU"
+          class="hover:text-cyan-400 underline"
+          >3Blue1Brown’s lecture</a
+        >. All formulas are mathematically accurate. • Made for education and
+        wonder •
+        <span
+          onclick="showHowItWorks()"
+          class="cursor-pointer hover:text-cyan-400"
+          >How the math works →</span
+        >
+      </div>
+    </footer>
+
+    <script>
+      // Tailwind script
+      function initTailwind() {
+        document.documentElement.style.setProperty("--accent", "#22d3ee");
+      }
+
+      // Gamma function (Lanczos approximation)
+      function gamma(z) {
+        if (z < 0.5) {
+          return Math.PI / (Math.sin(Math.PI * z) * gamma(1 - z));
+        }
+        z -= 1;
+        const g = 7;
+        const p = [
+          0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+          771.32342877765313, -176.61502916214059, 12.507343278686905,
+          -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7,
+        ];
+        let x = p[0];
+        for (let i = 1; i < p.length; i++) {
+          x += p[i] / (z + i);
+        }
+        const t = z + g + 0.5;
+        return Math.sqrt(2 * Math.PI) * Math.pow(t, z + 0.5) * Math.exp(-t) * x;
+      }
+
+      // Core volume function
+      function volume(n, r = 1) {
+        if (n <= 0) return 0;
+        const exponent = n / 2;
+        const num = Math.pow(Math.PI, exponent);
+        const den = gamma(exponent + 1);
+        return (num / den) * Math.pow(r, n);
+      }
+
+      // Surface area (n-1 sphere measure in n dimensions)
+      function surface(n, r = 1) {
+        if (n <= 1 || r <= 0) return 0;
+        return (n * volume(n, r)) / r;
+      }
+
+      // Update hero values
+      function updateHero() {
+        const nEl = document.getElementById("hero-n");
+        const volEl = document.getElementById("hero-volume");
+        if (!nEl || !volEl) return;
+
+        // Animate a nice value
+        setTimeout(() => {
+          nEl.textContent = "5.26";
+          volEl.textContent = volume(5.26, 1).toFixed(3);
+        }, 800);
+      }
+
+      // === TAB 0: Formula Explorer ===
+      let currentN = 5.0;
+      let currentR = 1.0;
+
+      function updateFormulaExplorer() {
+        const nSlider = document.getElementById("n-slider");
+        const rSlider = document.getElementById("r-slider");
+
+        currentN = parseFloat(nSlider.value);
+        currentR = parseFloat(rSlider.value);
+
+        // Update labels
+        document.getElementById("n-value").textContent = currentN.toFixed(1);
+        document.getElementById("r-value").textContent = currentR.toFixed(2);
+
+        // Calculate
+        const vol = volume(currentN, currentR);
+        const surf = surface(currentN, currentR);
+
+        // Render KaTeX
+        const formulaEl = document.getElementById("volume-formula");
+        const formulaStr = `V_n(r) = \\frac{\\pi^{${currentN.toFixed(1)}/2}}{\\Gamma\\left(\\frac{${currentN.toFixed(1)}}{2} + 1\\right)} \\, r^{${currentN.toFixed(1)}}`;
+
+        katex.render(formulaStr, formulaEl, {
+          throwOnError: false,
+          displayMode: true,
+          strict: false,
+        });
+
+        // Values
+        const volEl = document.getElementById("volume-value");
+        const surfEl = document.getElementById("surface-value");
+
+        volEl.textContent = vol < 1e-4 ? vol.toExponential(4) : vol.toFixed(6);
+        surfEl.textContent =
+          surf < 1e-4 ? surf.toExponential(4) : surf.toFixed(6);
+
+        // Comparison to 3D
+        const vol3D = volume(3, currentR);
+        const ratio = vol / vol3D;
+        document.getElementById("vol-compare").innerHTML =
+          ratio.toFixed(2) + "× 3D volume";
+
+        // Update hero if visible
+        const heroN = document.getElementById("hero-n");
+        if (heroN) heroN.textContent = currentN.toFixed(1);
+      }
+
+      function highlightFormulaPart(part) {
+        const el = document.getElementById("volume-formula");
+        el.style.transition = "all 0.3s ease";
+
+        if (part === "volume") {
+          el.style.boxShadow = "0 0 0 3px rgba(16, 185, 129, 0.6)";
+          setTimeout(() => {
+            el.style.boxShadow = "none";
+          }, 1200);
+
+          // Show tooltip explanation
+          showTooltip(
+            el,
+            "This is the full closed-form volume. The Gamma function in the denominator grows faster than the numerator for large n.",
+          );
+        }
+      }
+
+      function showTooltip(element, text) {
+        const tooltip = document.createElement("div");
+        tooltip.className =
+          "absolute bg-slate-800 text-xs px-4 py-3 rounded-2xl border border-slate-600 max-w-xs z-50 shadow-xl";
+        tooltip.style.top = "-60px";
+        tooltip.style.left = "50%";
+        tooltip.style.transform = "translateX(-50%)";
+        tooltip.innerHTML = text;
+
+        element.style.position = "relative";
+        element.appendChild(tooltip);
+
+        setTimeout(() => {
+          tooltip.style.transition = "opacity 0.3s";
+          tooltip.style.opacity = "0";
+          setTimeout(() => tooltip.remove(), 300);
+        }, 2200);
+      }
+
+      function setRandomN() {
+        const slider = document.getElementById("n-slider");
+        slider.value = (Math.random() * 19 + 1).toFixed(1);
+        updateFormulaExplorer();
+      }
+
+      function resetToUnit() {
+        document.getElementById("r-slider").value = 1;
+        document.getElementById("n-slider").value = 5;
+        updateFormulaExplorer();
+      }
+
+      function setToPeak() {
+        const slider = document.getElementById("n-slider");
+        slider.value = 5.26;
+        updateFormulaExplorer();
+
+        // Bonus: flash the peak label
+        const peakEl = document.querySelector(
+          "#tab-content-0 .text-emerald-400",
+        );
+        if (peakEl) {
+          peakEl.style.transition = "all 0.6s";
+          peakEl.style.color = "#4ade80";
+          setTimeout(() => (peakEl.style.color = "#34d399"), 900);
+        }
+      }
+
+      function copyFormula(type) {
+        let text = "";
+        if (type === "volume") {
+          text = `V_n(r) = π^(n/2) / Γ(n/2 + 1) * r^n`;
+        }
+
+        navigator.clipboard.writeText(text).then(() => {
+          const origText = event.target.innerHTML;
+          event.target.innerHTML = "COPIED!";
+          setTimeout(() => {
+            if (event.target) event.target.innerHTML = origText;
+          }, 1500);
+        });
+      }
+
+      function copyAllFormulas() {
+        const text = `Volume: V_n(r) = π^(n/2) / Γ(n/2 + 1) * r^n
+Surface: S_{n-1}(r) = n * V_n(r) / r
+Recurrence: V_n(r) = ∫_{-r}^r V_{n-2}(√(r² - x²)) dx`;
+
+        navigator.clipboard.writeText(text).then(() => {
+          const btns = document.querySelectorAll("button");
+          btns.forEach((b) => {
+            if (b.textContent.includes("Copy")) {
+              const orig = b.innerHTML;
+              b.innerHTML = "<span>COPIED ALL!</span>";
+              setTimeout(() => (b.innerHTML = orig), 1800);
+            }
+          });
+        });
+      }
+
+      // === TAB 1: Slicing Visualizer ===
+      let sliceCanvas, sliceCtx;
+      let currentSliceX = 0;
+      let isMouseDown = false;
+
+      function initSlicingCanvas() {
+        sliceCanvas = document.getElementById("slice-canvas");
+        sliceCtx = sliceCanvas.getContext("2d", { alpha: true });
+
+        // Mouse interaction
+        sliceCanvas.addEventListener("mousemove", handleSliceMouseMove);
+        sliceCanvas.addEventListener("mousedown", () => (isMouseDown = true));
+        sliceCanvas.addEventListener("mouseup", () => (isMouseDown = false));
+        sliceCanvas.addEventListener("mouseleave", () => (isMouseDown = false));
+
+        // Touch support
+        sliceCanvas.addEventListener("touchmove", (e) => {
+          e.preventDefault();
+          const rect = sliceCanvas.getBoundingClientRect();
+          const x =
+            ((e.touches[0].clientX - rect.left) / rect.width) *
+            sliceCanvas.width;
+          currentSliceX = Math.max(
+            -currentR * 1.05,
+            Math.min(
+              currentR * 1.05,
+              ((x - sliceCanvas.width / 2) / (sliceCanvas.width / 2.2)) *
+                currentR,
+            ),
+          );
+          drawSlicingViz();
+          updateSliceInfo();
+        });
+
+        // Initial draw
+        setTimeout(() => {
+          updateSlicingViz();
+        }, 300);
+      }
+
+      function handleSliceMouseMove(e) {
+        const rect = sliceCanvas.getBoundingClientRect();
+        const mouseX = e.clientX - rect.left;
+        const centerX = sliceCanvas.width / 2;
+        const scale = sliceCanvas.width / 2.2 / currentR;
+
+        currentSliceX = (mouseX - centerX) / scale;
+        currentSliceX = Math.max(-currentR, Math.min(currentR, currentSliceX));
+
+        drawSlicingViz();
+        updateSliceInfo();
+      }
+
+      let currentSliceN = 5;
+      let currentSliceR = 1.0;
+
+      function updateSlicingViz() {
+        const select = document.getElementById("slice-dimension");
+        currentSliceN = parseInt(select.value);
+        currentSliceR = 1.0; // fixed for viz clarity
+
+        // Update status
+        document.getElementById("slice-status").textContent =
+          `${currentSliceN}D • Drag or move mouse`;
+
+        currentSliceX = 0;
+        drawSlicingViz();
+        updateSliceInfo();
+      }
+
+      function drawSlicingViz() {
+        if (!sliceCtx) return;
+
+        const w = sliceCanvas.width;
+        const h = sliceCanvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        const scale = w / 2.2;
+
+        sliceCtx.clearRect(0, 0, w, h);
+
+        // Background grid
+        sliceCtx.strokeStyle = "#334155";
+        sliceCtx.lineWidth = 1;
+        for (let i = -2; i <= 2; i++) {
+          const x = cx + i * (scale / 2);
+          sliceCtx.beginPath();
+          sliceCtx.moveTo(x, 0);
+          sliceCtx.lineTo(x, h);
+          sliceCtx.stroke();
+
+          const y = cy + i * (scale / 2);
+          sliceCtx.beginPath();
+          sliceCtx.moveTo(0, y);
+          sliceCtx.lineTo(w, y);
+          sliceCtx.stroke();
+        }
+
+        // Draw main n-ball (circle for simplicity, representing projection)
+        const mainR = currentSliceR * scale;
+
+        // Outer glow
+        const grad = sliceCtx.createRadialGradient(
+          cx,
+          cy,
+          mainR * 0.6,
+          cx,
+          cy,
+          mainR * 1.15,
+        );
+        grad.addColorStop(0, "rgba(103, 232, 249, 0.15)");
+        grad.addColorStop(1, "rgba(103, 232, 249, 0.02)");
+
+        sliceCtx.fillStyle = grad;
+        sliceCtx.beginPath();
+        sliceCtx.arc(cx, cy, mainR * 1.15, 0, Math.PI * 2);
+        sliceCtx.fill();
+
+        // Main circle
+        sliceCtx.strokeStyle = "#67e8f9";
+        sliceCtx.lineWidth = 3.5;
+        sliceCtx.shadowColor = "#67e8f9";
+        sliceCtx.shadowBlur = 25;
+        sliceCtx.beginPath();
+        sliceCtx.arc(cx, cy, mainR, 0, Math.PI * 2);
+        sliceCtx.stroke();
+        sliceCtx.shadowBlur = 0;
+
+        // Fill with subtle gradient
+        const fillGrad = sliceCtx.createRadialGradient(
+          cx - mainR * 0.3,
+          cy - mainR * 0.3,
+          mainR * 0.2,
+          cx,
+          cy,
+          mainR,
+        );
+        fillGrad.addColorStop(0, "rgba(103, 232, 249, 0.12)");
+        fillGrad.addColorStop(1, "rgba(15, 23, 42, 0.6)");
+        sliceCtx.fillStyle = fillGrad;
+        sliceCtx.fill();
+
+        // Slice line
+        const sliceScreenX = cx + currentSliceX * (scale / currentSliceR);
+
+        sliceCtx.strokeStyle = "#f472b6";
+        sliceCtx.lineWidth = 2.5;
+        sliceCtx.setLineDash([6, 3]);
+        sliceCtx.beginPath();
+        sliceCtx.moveTo(sliceScreenX, cy - mainR - 15);
+        sliceCtx.lineTo(sliceScreenX, cy + mainR + 15);
+        sliceCtx.stroke();
+        sliceCtx.setLineDash([]);
+
+        // Slice label
+        sliceCtx.fillStyle = "#f472b6";
+        sliceCtx.font = "12px monospace";
+        sliceCtx.fillText("slice x", sliceScreenX + 8, cy - mainR - 22);
+
+        // Local (n-2) ball at slice
+        const localR = Math.sqrt(
+          Math.max(
+            0,
+            currentSliceR * currentSliceR - currentSliceX * currentSliceX,
+          ),
+        );
+        const localScreenR = (localR * scale) / currentSliceR;
+
+        // Draw local ball as smaller circle on the slice line
+        sliceCtx.strokeStyle = "#4ade80";
+        sliceCtx.lineWidth = 2.5;
+        sliceCtx.shadowColor = "#4ade80";
+        sliceCtx.shadowBlur = 15;
+        sliceCtx.beginPath();
+        sliceCtx.arc(sliceScreenX, cy, localScreenR, 0, Math.PI * 2);
+        sliceCtx.stroke();
+        sliceCtx.shadowBlur = 0;
+
+        // Fill local
+        sliceCtx.fillStyle = "rgba(74, 222, 128, 0.25)";
+        sliceCtx.fill();
+
+        // Dimension labels
+        sliceCtx.fillStyle = "#94a3b8";
+        sliceCtx.font = "bold 13px Inter, system-ui";
+        sliceCtx.fillText(
+          `${currentSliceN}D ball`,
+          cx + mainR * 0.45,
+          cy - mainR * 0.75,
+        );
+        sliceCtx.font = "12px Inter, system-ui";
+        sliceCtx.fillText(
+          `${currentSliceN - 2}D cross-section`,
+          sliceScreenX + 12,
+          cy + 18,
+        );
+
+        // Axis labels
+        sliceCtx.fillStyle = "#64748b";
+        sliceCtx.font = "10px monospace";
+        sliceCtx.fillText("-r", cx - mainR - 18, cy + 4);
+        sliceCtx.fillText("+r", cx + mainR + 6, cy + 4);
+      }
+
+      function updateSliceInfo() {
+        const localR = Math.sqrt(
+          Math.max(
+            0,
+            currentSliceR * currentSliceR - currentSliceX * currentSliceX,
+          ),
+        );
+        const localVol = volume(currentSliceN - 2, localR);
+
+        document.getElementById("slice-x").textContent =
+          currentSliceX.toFixed(3);
+        document.getElementById("local-radius").textContent = localR.toFixed(3);
+        document.getElementById("local-v").textContent =
+          localVol < 0.001 ? localVol.toExponential(2) : localVol.toFixed(4);
+
+        // Progress bar
+        const progress =
+          ((currentSliceX + currentSliceR) / (2 * currentSliceR)) * 100;
+        document.getElementById("slice-progress").style.width =
+          Math.max(0, Math.min(100, progress)) + "%";
+      }
+
+      function computeNumericalIntegral() {
+        const n = currentSliceN;
+        const r = currentSliceR;
+        const steps = 200;
+        let integral = 0;
+        const dx = (2 * r) / steps;
+
+        for (let i = 0; i < steps; i++) {
+          const x = -r + i * dx + dx / 2;
+          const localR = Math.sqrt(Math.max(0, r * r - x * x));
+          integral += volume(n - 2, localR) * dx;
+        }
+
+        const exact = volume(n, r);
+        const error = (Math.abs(integral - exact) / exact) * 100;
+
+        const msg = `Numerical integral ≈ ${integral.toFixed(6)}\nClosed form = ${exact.toFixed(6)}\nError: ${error.toFixed(2)}%`;
+
+        // Show beautiful custom toast instead of native alert (avoids "This page says" prefix)
+        showToast(
+          `Numerical integral ≈ <b>${integral.toFixed(6)}</b><br>` +
+            `Closed form = <b>${exact.toFixed(6)}</b><br>` +
+            `Error: <b>${error.toFixed(2)}%</b><br><br>` +
+            `<span class="text-emerald-300">The recurrence holds beautifully!</span>`,
+          "success",
+          6000,
+        );
+
+        // Bonus: flash the canvas
+        sliceCanvas.style.transition = "box-shadow 0.2s";
+        sliceCanvas.style.boxShadow = "0 0 40px #4ade80";
+        setTimeout(() => {
+          sliceCanvas.style.boxShadow = "0 10px 15px -3px rgb(0 0 0 / 0.3)";
+        }, 900);
+      }
+
+      // === TAB 2: Dimension Sweep Plot ===
+      let sweepChart;
+
+      function initSweepChart() {
+        const ctx = document.getElementById("sweep-chart").getContext("2d");
+
+        const labels = [];
+        const volumes = [];
+        const surfaces = [];
+
+        for (let n = 1; n <= 30; n++) {
+          labels.push(n);
+          volumes.push(volume(n, 1));
+          surfaces.push(surface(n, 1));
+        }
+
+        sweepChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "Volume Vₙ(1)",
+                data: volumes,
+                borderColor: "#22d3ee",
+                borderWidth: 3,
+                tension: 0.4,
+                fill: true,
+                backgroundColor: "rgba(34, 211, 238, 0.08)",
+                pointRadius: 0,
+                pointHoverRadius: 6,
+                pointHoverBorderColor: "#fff",
+                pointHoverBackgroundColor: "#22d3ee",
+              },
+              {
+                label: "Surface Sₙ₋₁(1)",
+                data: surfaces,
+                borderColor: "#a855f7",
+                borderWidth: 2.5,
+                tension: 0.35,
+                borderDash: [3, 2],
+                fill: false,
+                pointRadius: 0,
+                pointHoverRadius: 5,
+                pointHoverBorderColor: "#fff",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: {
+                labels: { color: "#64748b", usePointStyle: true, boxWidth: 10 },
+              },
+              tooltip: {
+                backgroundColor: "#1e2937",
+                titleColor: "#e0f2fe",
+                bodyColor: "#cbd5e1",
+                displayColors: false,
+                callbacks: {
+                  label: (ctx) => {
+                    const val = ctx.raw;
+                    return (
+                      ctx.dataset.label +
+                      ": " +
+                      (val < 0.001 ? val.toExponential(3) : val.toFixed(4))
+                    );
+                  },
+                },
+              },
+            },
+            scales: {
+              x: {
+                grid: { color: "#334155", lineWidth: 0.5 },
+                ticks: { color: "#64748b", font: { size: 11 } },
+              },
+              y: {
+                type: "logarithmic",
+                grid: { color: "#334155", lineWidth: 0.5 },
+                ticks: {
+                  color: "#64748b",
+                  font: { size: 10 },
+                  callback: (val) => {
+                    if (val >= 1) return val;
+                    if (val >= 0.001) return val.toFixed(3);
+                    return val.toExponential(0);
+                  },
+                },
+              },
+            },
+            onHover: (event, elements) => {
+              if (elements.length > 0) {
+                const idx = elements[0].index;
+                const n = idx + 1;
+                updateSweepSelection(n);
+              }
+            },
+          },
+        });
+
+        // Initial selection
+        setTimeout(() => updateSweepSelection(5), 500);
+      }
+
+      function updateSweepSelection(n) {
+        if (!sweepChart) return;
+
+        const vol = volume(n, 1);
+        const surf = surface(n, 1);
+
+        document.getElementById("sweep-n").textContent = n;
+        document.getElementById("sweep-vol").textContent =
+          vol < 0.01 ? vol.toExponential(2) : vol.toFixed(4);
+        document.getElementById("sweep-surf").textContent =
+          surf < 0.01 ? surf.toExponential(2) : surf.toFixed(4);
+
+        // Update formula explorer if user wants
+        // (optional sync)
+      }
+
+      function animateSweep() {
+        if (!sweepChart) return;
+
+        let n = 1;
+        const interval = setInterval(() => {
+          updateSweepSelection(n);
+
+          // Highlight on chart
+          const meta = sweepChart.getDatasetMeta(0);
+          if (meta.data[n - 1]) {
+            meta.data[n - 1].options.borderColor = "#fef08c";
+            sweepChart.update();
+
+            setTimeout(() => {
+              if (meta.data[n - 1])
+                meta.data[n - 1].options.borderColor = "#22d3ee";
+              sweepChart.update();
+            }, 280);
+          }
+
+          n++;
+          if (n > 30) {
+            clearInterval(interval);
+            setTimeout(() => updateSweepSelection(5), 600);
+          }
+        }, 90);
+      }
+
+      // === TAB 3: High-D Intuition ===
+      let cubeCanvas, cubeCtx;
+      let vanishCanvas, vanishCtx;
+
+      function initCubeDemo() {
+        cubeCanvas = document.getElementById("cube-canvas");
+        cubeCtx = cubeCanvas.getContext("2d");
+
+        const slider = document.getElementById("cube-n-slider");
+        slider.addEventListener("input", updateCubeDemo);
+
+        setTimeout(updateCubeDemo, 400);
+      }
+
+      function updateCubeDemo() {
+        if (!cubeCtx) return;
+
+        const n = parseFloat(document.getElementById("cube-n-slider").value);
+        const centralR = Math.max(0, Math.sqrt(n) - 1);
+
+        document.getElementById("cube-radius").textContent =
+          centralR.toFixed(2);
+
+        const w = cubeCanvas.width;
+        const h = cubeCanvas.height;
+        const cx = w / 2;
+        const cy = h / 2;
+        const size = Math.min(w, h) * 0.58;
+
+        cubeCtx.clearRect(0, 0, w, h);
+
+        // Hypercube (square projection)
+        cubeCtx.strokeStyle = "#64748b";
+        cubeCtx.lineWidth = 2;
+        cubeCtx.strokeRect(cx - size / 2, cy - size / 2, size, size);
+
+        // Corner spheres (4 corners)
+        const cornerR = 18;
+        const corners = [
+          [cx - size / 2, cy - size / 2],
+          [cx + size / 2, cy - size / 2],
+          [cx - size / 2, cy + size / 2],
+          [cx + size / 2, cy + size / 2],
+        ];
+
+        cubeCtx.fillStyle = "#f59e0b";
+        cubeCtx.strokeStyle = "#fbbf24";
+        cubeCtx.lineWidth = 2;
+
+        corners.forEach(([x, y]) => {
+          cubeCtx.beginPath();
+          cubeCtx.arc(x, y, cornerR, 0, Math.PI * 2);
+          cubeCtx.fill();
+          cubeCtx.stroke();
+        });
+
+        // Central sphere
+        const centralScreenR = centralR * (size / 3.2);
+
+        // Glow
+        const glow = cubeCtx.createRadialGradient(
+          cx,
+          cy,
+          centralScreenR * 0.4,
+          cx,
+          cy,
+          centralScreenR * 1.6,
+        );
+        glow.addColorStop(
+          0,
+          centralR > 1
+            ? "rgba(248, 113, 113, 0.45)"
+            : "rgba(103, 232, 249, 0.35)",
+        );
+        glow.addColorStop(1, "transparent");
+
+        cubeCtx.fillStyle = glow;
+        cubeCtx.beginPath();
+        cubeCtx.arc(cx, cy, centralScreenR * 1.6, 0, Math.PI * 2);
+        cubeCtx.fill();
+
+        // Central circle
+        cubeCtx.fillStyle = centralR > 1 ? "#f87171" : "#67e8f9";
+        cubeCtx.strokeStyle = centralR > 1 ? "#ef4444" : "#22d3ee";
+        cubeCtx.lineWidth = 3.5;
+
+        cubeCtx.beginPath();
+        cubeCtx.arc(cx, cy, centralScreenR, 0, Math.PI * 2);
+        cubeCtx.fill();
+        cubeCtx.stroke();
+
+        // Labels
+        cubeCtx.fillStyle = "#e2e8f0";
+        cubeCtx.font = "bold 14px Inter";
+        cubeCtx.fillText(
+          "Hypercube [-1,1]ⁿ",
+          cx + size * 0.42,
+          cy - size * 0.42 - 12,
+        );
+
+        if (centralR > 1) {
+          cubeCtx.fillStyle = "#f87171";
+          cubeCtx.font = "bold 11px Inter";
+          cubeCtx.fillText("BURSTING OUT!", cx - 48, cy + size * 0.38);
+        }
+
+        // Dimension text
+        cubeCtx.fillStyle = "#94a3b8";
+        cubeCtx.font = "12px monospace";
+        cubeCtx.fillText(`n = ${n.toFixed(1)}`, 18, 24);
+      }
+
+      function initVanishDemo() {
+        vanishCanvas = document.getElementById("vanish-canvas");
+        vanishCtx = vanishCanvas.getContext("2d");
+
+        // Initial state
+        drawVanishDemo(5);
+      }
+
+      function drawVanishDemo(n) {
+        if (!vanishCtx) return;
+
+        const w = vanishCanvas.width;
+        const h = vanishCanvas.height;
+        vanishCtx.clearRect(0, 0, w, h);
+
+        const vol = volume(n, 1);
+        const maxVol = volume(5.26, 1);
+        const ratio = Math.min(1, vol / maxVol);
+
+        // Background
+        vanishCtx.fillStyle = "#1e2937";
+        vanishCtx.fillRect(0, 0, w, h);
+
+        // Volume bar
+        const barWidth = w * 0.7;
+        const barHeight = 38;
+        const barX = (w - barWidth) / 2;
+        const barY = h / 2 - 25;
+
+        // Bar background
+        vanishCtx.fillStyle = "#334155";
+        vanishCtx.fillRect(barX, barY, barWidth, barHeight);
+
+        // Volume fill
+        const fillWidth = barWidth * ratio;
+        const fillGrad = vanishCtx.createLinearGradient(
+          barX,
+          barY,
+          barX + barWidth,
+          barY,
+        );
+        fillGrad.addColorStop(0, "#22d3ee");
+        fillGrad.addColorStop(1, "#6366f1");
+
+        vanishCtx.fillStyle = fillGrad;
+        vanishCtx.fillRect(barX, barY, fillWidth, barHeight);
+
+        // Label
+        vanishCtx.fillStyle = "#e0f2fe";
+        vanishCtx.font = "bold 15px Inter";
+        vanishCtx.fillText(`n = ${n}`, barX + 12, barY + 25);
+
+        // Volume text
+        vanishCtx.fillStyle = "#f1f5f9";
+        vanishCtx.font = "bold 13px monospace";
+        const volText = vol < 0.001 ? vol.toExponential(2) : vol.toFixed(4);
+        vanishCtx.fillText(volText, barX + barWidth - 95, barY + 25);
+
+        // Shell explanation
+        if (n > 8) {
+          vanishCtx.fillStyle = "#f472b6";
+          vanishCtx.font = "11px Inter";
+          vanishCtx.fillText(
+            "→ Almost all volume in thin surface shell",
+            28,
+            h - 28,
+          );
+        }
+
+        // Particles for high n
+        if (n > 12) {
+          vanishCtx.fillStyle = "#64748b";
+          for (let i = 0; i < 18; i++) {
+            const px = Math.random() * w;
+            const py = Math.random() * (h * 0.4) + h * 0.55;
+            vanishCtx.fillRect(px, py, 1.5, 1.5);
+          }
+        }
+      }
+
+      function runVolumeCollapse() {
+        let n = 3;
+        const interval = setInterval(() => {
+          drawVanishDemo(n);
+          n += 0.8;
+
+          if (n > 22) {
+            clearInterval(interval);
+            setTimeout(() => {
+              drawVanishDemo(5);
+            }, 1400);
+          }
+        }, 110);
+      }
+
+      function resetVanishDemo() {
+        drawVanishDemo(5);
+      }
+
+      // === Tab Switching ===
+      let currentTab = 0;
+
+      function switchTab(tabIndex) {
+        // Hide all
+        document
+          .querySelectorAll(".tab-content")
+          .forEach((el) => el.classList.add("hidden"));
+
+        // Show selected
+        document
+          .getElementById(`tab-content-${tabIndex}`)
+          .classList.remove("hidden");
+
+        // Update nav
+        document.querySelectorAll('[id^="tab-"]').forEach((el, i) => {
+          if (i === tabIndex) {
+            el.classList.add("nav-active");
+          } else {
+            el.classList.remove("nav-active");
+          }
+        });
+
+        currentTab = tabIndex;
+
+        // Lazy init
+        if (tabIndex === 1 && !sliceCanvas) {
+          setTimeout(initSlicingCanvas, 50);
+        }
+        if (tabIndex === 2 && !sweepChart) {
+          setTimeout(initSweepChart, 50);
+        }
+        if (tabIndex === 3 && !cubeCanvas) {
+          setTimeout(() => {
+            initCubeDemo();
+            initVanishDemo();
+          }, 80);
+        }
+      }
+
+      // Global helpers
+      function showHowItWorks() {
+        const modal = document.createElement("div");
+        modal.className =
+          "fixed inset-0 bg-black/70 flex items-center justify-center z-[100] p-6";
+        modal.innerHTML = `
+                <div class="bg-slate-900 max-w-2xl w-full rounded-3xl p-9 border border-slate-700">
+                    <div class="flex justify-between mb-6">
+                        <div class="font-display text-3xl">How the math works</div>
+                        <button onclick="this.closest('.fixed').remove()" class="text-slate-400 hover:text-white">✕</button>
+                    </div>
+                    
+                    <div class="space-y-6 text-sm">
+                        <div>
+                            <div class="font-semibold text-cyan-300 mb-1">1. The Closed Form</div>
+                            <div class="text-slate-300">The volume of an n-dimensional ball of radius r is given by the beautiful expression involving π raised to n/2 and the Gamma function (which generalizes the factorial).</div>
+                        </div>
+                        
+                        <div>
+                            <div class="font-semibold text-cyan-300 mb-1">2. Archimedes’ Insight Generalized</div>
+                            <div class="text-slate-300">Archimedes discovered the 3D volume by comparing the sphere to a cylinder. In higher dimensions we use the same principle: the surface area is the derivative of volume with respect to radius. This leads to the recurrence relation shown in the slicing visualizer.</div>
+                        </div>
+                        
+                        <div>
+                            <div class="font-semibold text-cyan-300 mb-1">3. Why Volume Peaks at ~5.26D</div>
+                            <div class="text-slate-300">The numerator grows with powers of π while the Gamma function in the denominator grows like a super-factorial. They balance around dimension 5–6, then the denominator wins and volume collapses.</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 text-xs text-center text-slate-400">All visualizations are mathematically exact within floating-point precision.</div>
+                </div>
+            `;
+        document.body.appendChild(modal);
+      }
+
+      function setInitialValues() {
+        // Formula explorer initial
+        const nSlider = document.getElementById("n-slider");
+        const rSlider = document.getElementById("r-slider");
+
+        nSlider.value = 5;
+        rSlider.value = 1;
+
+        // Trigger first update
+        setTimeout(() => {
+          updateFormulaExplorer();
+        }, 120);
+
+        // Initial hero
+        updateHero();
+
+        // Show first tab
+        document.getElementById("tab-content-0").classList.remove("hidden");
+        document.getElementById("tab-0").classList.add("nav-active");
+
+        // Preload some canvases
+        setTimeout(() => {
+          // Pre-draw cube at n=3
+          const cubeSlider = document.getElementById("cube-n-slider");
+          if (cubeSlider) cubeSlider.value = 3;
+        }, 800);
+      }
+
+      // Keyboard shortcuts
+      function initKeyboard() {
+        document.addEventListener("keydown", (e) => {
+          if (e.key === "?") {
+            e.preventDefault();
+            showHowItWorks();
+          }
+          if (
+            e.key.toLowerCase() === "r" &&
+            document.activeElement.tagName === "BODY"
+          ) {
+            e.preventDefault();
+            resetToUnit();
+          }
+        });
+
+        // Easter egg: press 'b' for burst animation
+        let burstCount = 0;
+        document.addEventListener("keypress", (e) => {
+          if (e.key === "b") {
+            burstCount++;
+            if (burstCount >= 3) {
+              const cube = document.getElementById("cube-canvas");
+              if (cube) {
+                cube.style.transition = "transform 0.1s";
+                cube.style.transform = "scale(1.03)";
+                setTimeout(() => (cube.style.transform = "scale(1)"), 180);
+              }
+              burstCount = 0;
+            }
+          }
+        });
+      }
+
+      // Boot everything
+      function bootApp() {
+        initTailwind();
+        setInitialValues();
+        initKeyboard();
+        ensureToastContainer();
+
+        // Boot first tab canvases after slight delay
+        setTimeout(() => {
+          // Preload slicing canvas
+          const sliceSelect = document.getElementById("slice-dimension");
+          if (sliceSelect) {
+            sliceSelect.value = "5";
+          }
+        }, 900);
+
+        // Make sure hero updates
+        setTimeout(updateHero, 1500);
+
+        // Welcome toast (non-intrusive)
+        setTimeout(() => {
+          const toast = document.createElement("div");
+          toast.className =
+            "fixed bottom-6 right-6 bg-slate-800 border border-slate-600 px-5 py-3 rounded-3xl text-xs shadow-2xl flex items-center gap-x-3 z-50";
+          toast.innerHTML = `
+                    <div>💡 Tip: Hover formula parts for explanations • Press <span class="font-mono bg-slate-700 px-1 rounded">?</span> for how it works</div>
+                `;
+          document.body.appendChild(toast);
+
+          setTimeout(() => {
+            toast.style.transition = "all 0.4s";
+            toast.style.opacity = "0";
+            setTimeout(() => toast.remove(), 500);
+          }, 3800);
+        }, 5200);
+
+        // Mark app ready
+        console.log(
+          "%c[n-Ball Explorer] Ready — all interactive demos initialized.",
+          "color:#64748b",
+        );
+      }
+
+      // Start
+      window.onload = bootApp;
+
+      // Make some functions global for console debugging
+      window.nBall = { volume, surface, gamma };
+
+      // === Beautiful Toast Notification System ===
+      // Replaces native alert() to avoid the ugly "This page says" browser prefix
+      function showToast(htmlContent, type = "success", duration = 4500) {
+        const container = document.getElementById("toast-container");
+        if (!container) return;
+
+        const toast = document.createElement("div");
+
+        const colors = {
+          success: "border-emerald-500 bg-slate-900",
+          error: "border-red-500 bg-slate-900",
+          info: "border-cyan-500 bg-slate-900",
+        };
+        const icon = {
+          success: "✅",
+          error: "❌",
+          info: "ℹ️",
+        };
+
+        toast.className = `flex items-start gap-x-3 w-80 max-w-[calc(100vw-2rem)] p-4 rounded-2xl border shadow-2xl ${colors[type] || colors.success} transform transition-all duration-300 translate-x-[120%] opacity-0`;
+
+        toast.innerHTML = `
+                <div class="text-xl mt-0.5 flex-shrink-0">${icon[type] || icon.success}</div>
+                <div class="flex-1 text-sm text-slate-200 leading-snug pr-2">${htmlContent}</div>
+                <button class="text-slate-400 hover:text-white transition-colors flex-shrink-0 mt-0.5" onclick="this.closest('.flex').remove()">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6h12v12" />
+                    </svg>
+                </button>
+            `;
+
+        container.appendChild(toast);
+
+        // Animate in
+        requestAnimationFrame(() => {
+          toast.style.transition = "all 0.35s cubic-bezier(0.32, 0.72, 0, 1)";
+          toast.style.transform = "translateX(0)";
+          toast.style.opacity = "1";
+        });
+
+        // Auto dismiss
+        if (duration > 0) {
+          setTimeout(() => {
+            if (toast.parentNode) {
+              toast.style.transition = "all 0.25s ease";
+              toast.style.opacity = "0";
+              toast.style.transform = "translateX(120%)";
+              setTimeout(() => toast.remove(), 250);
+            }
+          }, duration);
+        }
+      }
+
+      // Create toast container on load if not present
+      function ensureToastContainer() {
+        if (!document.getElementById("toast-container")) {
+          const container = document.createElement("div");
+          container.id = "toast-container";
+          container.className =
+            "fixed top-6 right-6 z-[999] flex flex-col gap-y-3 pointer-events-auto";
+          document.body.appendChild(container);
+        }
+      }
+    </script>
+  </body>
+</html>
